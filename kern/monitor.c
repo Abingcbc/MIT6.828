@@ -12,6 +12,7 @@
 #include <kern/kdebug.h>
 #include <kern/trap.h>
 #include <kern/pmap.h>
+#include <kern/env.h>
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
@@ -29,7 +30,8 @@ static struct Command commands[] = {
 	{ "backtrace", "Track the call list of functions", mon_backtrace},
 	{ "showmappings", "Display the physical page mappings and corresponding permission bits", mon_showmappings},
 	{ "updateperm", "Set, clear, or change the permissions of any mapping", mon_updateperm},
-	{ "dumpmem", "Dump the contents of a range of memory given either a virtual or physical address range", mon_dumpmem}
+	{ "dumpmem", "Dump the contents of a range of memory given either a virtual or physical address range", mon_dumpmem},
+	{ "onestep", "Single-step one instruction at a time", mon_onestep}
 };
 
 /***** Implementations of basic kernel monitor commands *****/
@@ -157,8 +159,7 @@ mon_updateperm(int argc, char **argv, struct Trapframe *tf) {
 		cprintf("%08x set permission %c\n", addr, perm);
 	}
 	return 0;	
-}
-	
+}	
 
 int
 mon_dumpmem(int argc, char **argv, struct Trapframe *tf) {
@@ -186,6 +187,22 @@ mon_dumpmem(int argc, char **argv, struct Trapframe *tf) {
 	}
 	else
 		cprintf("unknown param %c\n", type);
+	return 0;
+}
+
+int
+mon_onestep(int argc, char **argv, struct Trapframe *tf) {
+	if (argc != 1) {
+		cprintf("Usage: onestep\n");
+		return 0;
+	}
+	if (tf == NULL) {
+		cprintf("step error\n");
+		return 0;
+	}
+	tf->tf_eflags |= FL_TF;
+	cprintf("now: %08x\n", tf->tf_eip);
+	env_run(curenv);
 	return 0;
 }
 
