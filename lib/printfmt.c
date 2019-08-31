@@ -7,7 +7,6 @@
 #include <inc/string.h>
 #include <inc/stdarg.h>
 #include <inc/error.h>
-#include <inc/csa.h>
 
 /*
  * Space or zero padding and a field width are supported for the numeric
@@ -228,9 +227,6 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			base = 16;
 		number:
 			printnum(putch, putdat, num, base, width, padc);
-			break;
-		case 'z':
-			csa = getint(&ap, lflag);
 			break;
 
 		// escaped '%' character

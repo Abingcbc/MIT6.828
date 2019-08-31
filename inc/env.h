@@ -28,6 +28,10 @@ typedef int32_t envid_t;
 #define LOG2NENV		10
 #define NENV			(1 << LOG2NENV)
 #define ENVX(envid)		((envid) & (NENV - 1))
+#define ENV_PRIOR_SUPER 0
+#define ENV_PRIOR_HIGH 10
+#define ENV_PRIOR_NORMAL 100
+#define ENV_PRIOR_LOW 10000
 
 // Values of env_status in struct Env
 enum {
