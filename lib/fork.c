@@ -67,19 +67,29 @@ duppage(envid_t envid, unsigned pn)
 	void *addr;
 	pte_t pte;
 	int perm;
+
 	addr = (void *)((uint32_t)pn * PGSIZE);
 	pte = uvpt[pn];
 	perm = PTE_P | PTE_U;
-	if ((pte & PTE_W) || (pte & PTE_COW))
-		perm |= PTE_COW;
-	if (sys_page_map(thisenv->env_id, addr, envid, addr, perm) < 0) {
-		panic("duppage: page remapping failed");
-		return r;
-	}
-	if (perm & PTE_COW) {
-		if (sys_page_map(thisenv->env_id, addr, thisenv->env_id, addr, perm) < 0) {
-			panic("duppage: page remapping failed");
+	if (pte & PTE_SHARE) {
+		if ((r = sys_page_map(sys_getenvid(), addr, envid, addr, pte & PTE_SYSCALL)) < 0) {
+			panic("duppage: page mapping failed %e", r);
 			return r;
+		}
+	}
+	else
+	{
+		if ((pte & PTE_W) || (pte & PTE_COW))
+			perm |= PTE_COW;
+		if ((r = sys_page_map(thisenv->env_id, addr, envid, addr, perm)) < 0) {
+			panic("duppage: page remapping failed %e", r);
+			return r;
+		}
+		if (perm & PTE_COW) {
+			if ((r = sys_page_map(thisenv->env_id, addr, thisenv->env_id, addr, perm)) < 0) {
+				panic("duppage: page remapping failed %e", r);
+				return r;
+			}
 		}
 	}
 	return 0;
